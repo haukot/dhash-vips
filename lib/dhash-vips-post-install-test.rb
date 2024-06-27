@@ -34,15 +34,54 @@ else
 end
 ss.product ss do |s1, s2|
   next unless check.call s1, s2
-  unless f[s1, s2] == DHashVips::IDHash.distance3_c(s1, s2)
-    p [s1, s2]
-    p [s1.to_s(16).rjust(64,?0)].pack("H*").unpack("N*").map{ |_| _.to_s(2).rjust(32, ?0) }
-    p [s2.to_s(16).rjust(64,?0)].pack("H*").unpack("N*").map{ |_| _.to_s(2).rjust(32, ?0) }
-    p [f[s1, s2], DHashVips::IDHash.distance3_c(s1, s2)]
+
+  # puts
+  # puts
+  expected = DHashVips::IDHash.distance3_ruby(s1, s2)
+  res = DHashVips::IDHash.distance3_c(s1, s2)
+  unless res == expected
+    puts "s1"
+    puts s1
+    puts "s2"
+    puts s2
+    puts "res"
+    puts res
+
+    puts
+
+    xor_result = (s1 ^ s2)
+    or_result = (s1 | s2)
+    shifted_result = or_result >> 128
+    and_result = xor_result & shifted_result
+    puts "kinda full #{and_result.to_s(2).count('1')}"
+    full_result = "#{((s1 ^ s2) & (s1 | s2) >> 128)}"
+    puts "ruby"
+    puts "xor_result #{xor_result}, or_result #{or_result}, and_result #{and_result}, shifted #{shifted_result}"
+    puts "full_result #{full_result}"
+    puts "expected #{expected}"
     fail
   end
+  fail unless DHashVips::IDHash.distance3_bdigit(s1, s2) == expected
+  fail unless DHashVips::IDHash.distance3_pack_bit_logic(s1, s2) == expected
+  fail unless DHashVips::IDHash.distance3_pack_algo(s1, s2) == expected
+  fail unless DHashVips::IDHash.distance3_popcount_c(s1, s2) == expected
+  fail unless DHashVips::IDHash.distance3_popcount_twiddle(s1, s2) == expected
+
+  # unless f[s1, s2] == DHashVips::IDHash.distance3_c(s1, s2)
+  #   p [s1, s2]
+  #   p [s1.to_s(16).rjust(64,?0)].pack("H*").unpack("N*").map{ |_| _.to_s(2).rjust(32, ?0) }
+  #   p [s2.to_s(16).rjust(64,?0)].pack("H*").unpack("N*").map{ |_| _.to_s(2).rjust(32, ?0) }
+  #   p [f[s1, s2], DHashVips::IDHash.distance3_c(s1, s2)]
+  #   fail
+  # end
 end
-100000.times do
-  s1, s2 = Array.new(2){ n = rand 256; ([?0] * n + [?1] * (256 - n)).shuffle.join.to_i 2 }
-  fail unless DHashVips::IDHash.distance3(s1, s2) == DHashVips::IDHash.distance3_ruby(s1, s2)
-end
+# 100000.times do
+#   s1, s2 = Array.new(2){ n = rand 256; ([?0] * n + [?1] * (256 - n)).shuffle.join.to_i 2 }
+#   expected = DHashVips::IDHash.distance3_ruby(s1, s2)
+#   fail unless DHashVips::IDHash.distance3(s1, s2) == expected
+#   # fail unless DHashVips::IDHash.distance3_pack(s1, s2) == expected
+#   fail unless DHashVips::IDHash.distance3_bit(s1, s2) == expected
+#   fail unless DHashVips::IDHash.distance3_c(s1, s2) == expected
+#   # fail unless DHashVips::IDHash.distance3_c2(s1, s2) == expected
+#   fail unless DHashVips::IDHash.distance3_c3(s1, s2) == expected
+# end

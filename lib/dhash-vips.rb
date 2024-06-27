@@ -1,4 +1,6 @@
 require "vips"
+require "bit-twiddle"
+require "./idhash.so"
 Vips.vector_set false
 
 module DHashVips
@@ -30,6 +32,29 @@ module DHashVips
   end
 
   module IDHash
+    def self.distance3_bdigit a, b
+      self.distance_bdigit_c(a, b)
+    end
+
+    def self.distance3_pack_bit_logic a, b
+      self.distance_pack_bit_logic_c(a, b)
+    end
+
+    def self.distance3_pack_algo a, b
+      self.distance_pack_algo_c(a, b)
+    end
+
+    def self.distance3_popcount_c a, b
+      self.popcount_c((a ^ b) & (a | b) >> 128)
+    end
+
+    def self.distance3_popcount_twiddle a, b
+      BitTwiddle.popcount((a ^ b) & (a | b) >> 128)
+    end
+
+    def self.distance3_c a, b
+      self.distance3_pack_algo(a, b)
+    end
 
     def self.distance3_ruby a, b
       ((a ^ b) & (a | b) >> 128).to_s(2).count "1"

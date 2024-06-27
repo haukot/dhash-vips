@@ -14,4 +14,7 @@ gem "mll"
 gem "minitest"
 gem "byebug", "<11.1.0"   # for Ruby 2.3
 
+gem "ruby-vips"
+gem "bit-twiddle"
+
 gemspec

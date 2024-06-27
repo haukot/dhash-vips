@@ -212,9 +212,9 @@ end
 
 desc "Benchmark speed of Dhash, DHashVips::DHash, DHashVips::IDHash and Phamilie"
 task :compare_speed do
-  require "dhash"
-  require "phamilie"
-  phamilie = Phamilie.new
+  # require "dhash"
+  # require "phamilie"
+  # phamilie = Phamilie.new
   require_relative "lib/dhash-vips"
 
   filenames = %w{
@@ -226,7 +226,9 @@ task :compare_speed do
     3f9f3db06db20d1d9f8188cd753f6ef4.jpg
     df0a3b93e9412536ee8a11255f974141.jpg
     679634ff89a31279a39f03e278bc9a01.jpg
-  }.flat_map do |filename|
+                }
+    .each{ |f| download_if_needed("images/#{f}") }
+   .flat_map do |filename|
     image = Vips::Image.new_from_file "images/#{filename}"
     [0, 1, 2, 3].map do |a|
       "benchmark/#{a}_#{filename}".tap do |filename|
@@ -238,13 +240,19 @@ task :compare_speed do
   end
 
   require "benchmark"
-  puts "load the image and calculate the fingerprint:"
+  # puts "load the image and calculate the fingerprint:"
   hashes = []
   Benchmark.bm 19 do |bm|
     [
-      [Dhash, :calculate],
-      [phamilie, :fingerprint],
+      # [Dhash, :calculate],
+      # [phamilie, :fingerprint],
       [DHashVips::DHash, :calculate],
+      [DHashVips::IDHash, :fingerprint],
+      [DHashVips::IDHash, :fingerprint],
+      [DHashVips::IDHash, :fingerprint],
+      [DHashVips::IDHash, :fingerprint],
+      [DHashVips::IDHash, :fingerprint],
+      [DHashVips::IDHash, :fingerprint],
       [DHashVips::IDHash, :fingerprint],
       [DHashVips::IDHash, :fingerprint, 4],
     ].each do |m, calc, power|
@@ -256,21 +264,25 @@ task :compare_speed do
 
   # for `distance`, `distance3_ruby` and `distance3_c` we use the same hashes
   # this array manipulation converts [1, 2, 3, 4, 5] into [1, 2, 3, 4, 4, 4, 5]
-  hashes[-1, 1] = hashes[-2, 2]
-  hashes[-1, 1] = hashes[-2, 2]
+  # hashes[-1, 1] = hashes[-2, 2]
+  # hashes[-1, 1] = hashes[-2, 2]
 
   puts "\nmeasure the distance (32*32*2000 times):"
   Benchmark.bm 32 do |bm|
     [
-      [Dhash, :hamming],
-      [phamilie, :distance, nil, 1],
+      # [Dhash, :hamming],
+      # [phamilie, :distance, nil, 1],
       [DHashVips::DHash, :hamming],
       [DHashVips::IDHash, :distance],
+      [DHashVips::IDHash, :distance3_bdigit],
+      [DHashVips::IDHash, :distance3_pack_bit_logic],
+      [DHashVips::IDHash, :distance3_pack_algo],
+      [DHashVips::IDHash, :distance3_popcount_c],
+      [DHashVips::IDHash, :distance3_popcount_twiddle],
       [DHashVips::IDHash, :distance3_ruby],
-      [DHashVips::IDHash, :distance3_c],
       [DHashVips::IDHash, :distance, 4],
     ].zip(hashes) do |(m, dm, power, ii), hs|
-      bm.report "#{m.is_a?(Module) ? m : m.class} #{dm} #{power}" do
+      bm.report "#{dm} #{power}" do
         _ = [hs, filenames][ii || 0]
         _.product _ do |h1, h2|
           2000.times{ m.public_send dm, h1, h2 }
@@ -304,8 +316,8 @@ task :benchmark do
 
   require "dhash"
   puts "gem dhash: #{Gem.loaded_specs["dhash"].source}"
-  require "phamilie"; puts "gem phamilie: #{Gem.loaded_specs["phamilie"].version}"
-  phamilie = Phamilie.new
+  # require "phamilie"; puts "gem phamilie: #{Gem.loaded_specs["phamilie"].version}"
+  # phamilie = Phamilie.new
   require "phashion"; puts "gem phashion: #{Gem.loaded_specs["phashion"].version}"
   require "mini_magick"
   require "dhashy"; puts "gem dhashy: #{Gem.loaded_specs["dhashy"].version}"
