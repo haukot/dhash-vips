@@ -3,6 +3,7 @@
 // this only for idhash_distance_bdigit
 #include <bignum.c>
 
+// On ruby:2.7.4-slim
 // ```
 // $ rake compare_speed
 //
@@ -82,7 +83,7 @@ static VALUE idhash_distance_pack_algo(VALUE self, VALUE a, VALUE b) {
     size_t cycles = 128 / (sizeof(unsigned int) * CHAR_BIT);
 
     for (i = an; i-- > cycles;) {
-      acc += __builtin_popcountl((as[i] | (i >= bn ? 0 : bs[i])) & (as[i-4] ^ bs[i-4]));
+      acc += __builtin_popcountl((as[i] | (i >= bn ? 0 : bs[i])) & (as[i-cycles] ^ (i-cycles >= bn ? 0 : bs[i-cycles])));
     }
 
     xfree(as);
